@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ forum.name }} - 论坛 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'forum_index' %}">论坛首页</a></li>
+                <li class="breadcrumb-item active">{{ forum.name }}</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">{{ forum.name }}</h1>
+                <p class="text-muted mb-0">{{ forum.description }}</p>
+            </div>
+            {% if user.is_authenticated %}
+            <a href="{% url 'post_create' forum.id %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> 发帖
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <!-- 搜索和排序 -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-6">
+                        <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="搜索帖子标题或内容...">
+                    </div>
+                    <div class="col-md-4">
+                        <select name="sort" class="form-select">
+                            <option value="latest" {% if sort == 'latest' %}selected{% endif %}>最新回复</option>
+                            <option value="hot" {% if sort == 'hot' %}selected{% endif %}>热门帖子</option>
+                            <option value="essence" {% if sort == 'essence' %}selected{% endif %}>精华帖子</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-search"></i> 搜索
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 帖子列表 -->
+        {% if posts %}
+            <div class="list-group">
+                {% for post in posts %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="row">
+                        <div class="col-12 col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="mb-1 me-2">
+                                    <a href="{% url 'post_detail' post.id %}" class="text-decoration-none">
+                                        {{ post.title }}
+                                    </a>
+                                </h5>
+                                {% if post.is_top %}
+                                <span class="badge bg-primary me-2">置顶</span>
+                                {% endif %}
+                                {% if post.is_essence %}
+                                <span class="badge bg-warning me-2">精华</span>
+                                {% endif %}
+                                {% if post.status == 'pending' %}
+                                <span class="badge bg-secondary">待审核</span>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="mb-2 text-muted">
+                                {{ post.content|truncatewords:20|striptags }}
+                            </p>
+                            
+                            <div class="d-flex align-items-center text-muted small">
+                                <span class="me-3">
+                                    <i class="bi bi-person-circle"></i>
+                                    <a href="{% url 'user_profile_detail' post.author.username %}" class="text-decoration-none">
+                                        {{ post.author.username }}
+                                    </a>
+                                </span>
+                                <span class="me-3">
+                                    <i class="bi bi-clock"></i> {{ post.created_at|date:"Y-m-d H:i" }}
+                                </span>
+                                <span class="me-3">
+                                    <i class="bi bi-eye"></i> {{ post.view_count }}
+                                </span>
+                                <span>
+                                    <i class="bi bi-chat"></i> {{ post.reply_count }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-4 text-md-end mt-2 mt-md-0">
+                            {% if post.last_reply_at %}
+                            <small class="text-muted d-block">
+                                最后回复<br>
+                                {{ post.last_reply_at|date:"m-d H:i" }}
+                            </small>
+                            {% endif %}
+                            
+                            <div class="btn-group btn-group-sm mt-2" role="group">
+                                {% if user.is_authenticated %}
+                                <a href="{% url 'post_detail' post.id %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i> 查看
+                                </a>
+                                
+                                {% if user.is_staff or post.author == user %}
+                                <a href="{% url 'post_edit' post.id %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </a>
+                                {% endif %}
+                                
+                                {% if user.is_staff %}
+                                <button class="btn btn-outline-warning" onclick="toggleEssence({{ post.id }})">
+                                    <i class="bi bi-star{% if post.is_essence %}-fill{% endif %}"></i>
+                                </button>
+                                <button class="btn btn-outline-info" onclick="toggleTop({{ post.id }})">
+                                    <i class="bi bi-arrow-up-square{% if post.is_top %}-fill{% endif %}"></i>
+                                </button>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- 分页 -->
+            {% if posts.has_other_pages %}
+            <nav aria-label="分页导航">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if posts.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.previous_page_number }}&search={{ search }}&sort={{ sort }}">
+                            <i class="bi bi-chevron-left"></i> 上一页
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in posts.paginator.page_range %}
+                        {% if posts.number == page_num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% elif page_num > posts.number|add:'-3' and page_num < posts.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_num }}&search={{ search }}&sort={{ sort }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.next_page_number }}&search={{ search }}&sort={{ sort }}">
+                            下一页 <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-file-text" style="font-size: 3rem; color: #6c757d;"></i>
+                </div>
+                <h4 class="text-muted">暂无帖子</h4>
+                {% if search %}
+                <p class="text-muted">没有找到包含 "{{ search }}" 的帖子</p>
+                {% else %}
+                <p class="text-muted">成为第一个发帖的人吧！</p>
+                {% endif %}
+                {% if user.is_authenticated %}
+                <a href="{% url 'post_create' forum.id %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> 发布新帖
+                </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleEssence(postId) {
+    fetch(`/myapp/post/${postId}/essence/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || '操作失败');
+        }
+    });
+}
+
+function toggleTop(postId) {
+    fetch(`/myapp/post/${postId}/top/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || '操作失败');
+        }
+    });
+}
+</script>
+{% endblock %}

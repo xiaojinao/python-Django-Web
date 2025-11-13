@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'forum_index' %}">论坛首页</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'forum_detail' post.forum.id %}">{{ post.forum.name }}</a></li>
+                <li class="breadcrumb-item active">帖子详情</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-9">
+        <!-- 帖子内容 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h1 class="h4 mb-1">{{ post.title }}</h1>
+                        <div class="d-flex align-items-center text-muted small">
+                            <span class="me-3">
+                                <i class="bi bi-person-circle"></i>
+                                <a href="{% url 'user_profile_detail' post.author.username %}" class="text-decoration-none">
+                                    {{ post.author.username }}
+                                </a>
+                                {% if post.author.is_staff %}
+                                <span class="badge bg-primary ms-1">管理员</span>
+                                {% endif %}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-clock"></i> {{ post.created_at|date:"Y-m-d H:i" }}
+                            </span>
+                            <span class="me-3">
+                                <i class="bi bi-eye"></i> {{ post.view_count }} 次浏览
+                            </span>
+                            {% if post.updated_at != post.created_at %}
+                            <span>
+                                <i class="bi bi-pencil"></i> 编辑于 {{ post.updated_at|date:"Y-m-d H:i" }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        {% if post.is_top %}
+                        <span class="badge bg-primary me-2">置顶</span>
+                        {% endif %}
+                        {% if post.is_essence %}
+                        <span class="badge bg-warning me-2">精华</span>
+                        {% endif %}
+                        
+                        {% if user.is_authenticated %}
+                        <div class="btn-group btn-group-sm" role="group">
+                            {% if user.is_staff or post.author == user %}
+                            <a href="{% url 'post_edit' post.id %}" class="btn btn-outline-primary">
+                                <i class="bi bi-pencil"></i> 编辑
+                            </a>
+                            {% endif %}
+                            
+                            {% if user.is_staff %}
+                            <button class="btn btn-outline-warning" onclick="toggleEssence({{ post.id }})">
+                                <i class="bi bi-star{% if post.is_essence %}-fill{% endif %}"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="toggleTop({{ post.id }})">
+                                <i class="bi bi-arrow-up-square{% if post.is_top %}-fill{% endif %}"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="post-content">
+                    {{ post.content|linebreaks }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 评论区 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat"></i> 回复 ({{ replies|length }})
+                    </h5>
+                    {% if user.is_authenticated %}
+                    <button class="btn btn-primary btn-sm" onclick="scrollToReplyForm()">
+                        <i class="bi bi-reply"></i> 回复
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                {% if replies %}
+                <div class="list-group list-group-flush">
+                    {% for reply in replies %}
+                    <div class="list-group-item" id="reply-{{ reply.id }}">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <div class="avatar bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person-circle text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            <a href="{% url 'user_profile_detail' reply.author.username %}" class="text-decoration-none">
+                                                {{ reply.author.username }}
+                                            </a>
+                                            {% if reply.author.is_staff %}
+                                            <span class="badge bg-primary ms-1">管理员</span>
+                                            {% endif %}
+                                            {% if reply.parent_reply %}
+                                            <span class="text-muted">回复</span>
+                                            <a href="#reply-{{ reply.parent_reply.id }}" class="text-decoration-none">
+                                                @{{ reply.parent_reply.author.username }}
+                                            </a>
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">{{ reply.created_at|date:"Y-m-d H:i" }}</small>
+                                        {% if reply.updated_at != reply.created_at %}
+                                        <small class="text-muted">• 编辑于 {{ reply.updated_at|date:"Y-m-d H:i" }}</small>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if user.is_authenticated %}
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-secondary" onclick="replyTo({{ reply.id }})">
+                                            <i class="bi bi-reply"></i>
+                                        </button>
+                                        
+                                        {% if user.is_staff or reply.author == user %}
+                                        <button class="btn btn-outline-danger" onclick="deleteReply({{ reply.id }})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mt-2">
+                                    {% if reply.parent_reply %}
+                                    <div class="reply-quote bg-light p-2 mb-2 border-start border-3 border-primary">
+                                        <small class="text-muted">引用 @{{ reply.parent_reply.author.username }}:</small>
+                                        <div class="mt-1">{{ reply.parent_reply.content|truncatewords:20 }}</div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="reply-content">
+                                        {{ reply.content|linebreaks }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-2">
+                        <i class="bi bi-chat-dots" style="font-size: 2rem; color: #6c757d;"></i>
+                    </div>
+                    <p class="text-muted">还没有回复，来发表第一个回复吧！</p>
+                </div>
+                {% endif %}
+                
+                <!-- 回复表单 -->
+                {% if user.is_authenticated %}
+                <div class="card-footer" id="reply-form">
+                    <form method="POST" action="{% url 'add_reply' post.id %}" id="reply-form-element">
+                        {% csrf_token %}
+                        <input type="hidden" name="parent_reply_id" id="parent-reply-id" value="">
+                        
+                        {% if reply_to_user %}
+                        <div class="alert alert-info d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-info-circle"></i> 正在回复 @{{ reply_to_user }}
+                            </span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cancelReply()">
+                                取消回复
+                            </button>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="content" class="form-label">回复内容</label>
+                            <textarea class="form-control" id="content" name="content" rows="4" 
+                                      required placeholder="请输入回复内容..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> 发布回复
+                                </button>
+                                <a href="{% url 'forum_detail' post.forum.id %}" class="btn btn-secondary ms-2">
+                                    返回
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% else %}
+                <div class="card-footer text-center">
+                    <p class="text-muted mb-2">登录后才能参与讨论</p>
+                    <a href="/accounts/login/?next={{ request.path }}" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right"></i> 登录
+                    </a>
+                    <a href="/accounts/signup/?next={{ request.path }}" class="btn btn-outline-primary ms-2">
+                        <i class="bi bi-person-plus"></i> 注册
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 侧边栏 -->
+    <div class="col-12 col-lg-3">
+        <!-- 帖子信息 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">帖子信息</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h5 mb-0 text-primary">{{ post.view_count }}</div>
+                        <small class="text-muted">浏览</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5 mb-0 text-info">{{ post.reply_count }}</div>
+                        <small class="text-muted">回复</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h5 mb-0 text-success">{{ post.like_count }}</div>
+                        <small class="text-muted">点赞</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 作者信息 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">作者信息</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <div class="avatar bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                        <i class="bi bi-person-circle" style="font-size: 2rem;"></i>
+                    </div>
+                    <h6 class="mb-1">
+                        <a href="{% url 'user_profile_detail' post.author.username %}" class="text-decoration-none">
+                            {{ post.author.username }}
+                        </a>
+                    </h6>
+                    {% if post.author.is_staff %}
+                    <span class="badge bg-primary mb-2">管理员</span>
+                    {% endif %}
+                    
+                    {% with profile=post.author.userprofile %}
+                    <p class="text-muted small mb-2">{{ profile.bio|default:"这个人很懒，什么都没有留下。" }}</p>
+                    <div class="row text-center small">
+                        <div class="col-6">
+                            <div class="text-primary">{{ profile.post_count|default:0 }}</div>
+                            <small class="text-muted">发帖</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-info">{{ profile.reply_count|default:0 }}</div>
+                            <small class="text-muted">回复</small>
+                        </div>
+                    </div>
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 相关操作 -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">相关操作</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'forum_detail' post.forum.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-left"></i> 返回{{ post.forum.name }}
+                    </a>
+                    {% if user.is_authenticated %}
+                    <button class="btn btn-outline-secondary btn-sm" onclick="sharePost()">
+                        <i class="bi bi-share"></i> 分享帖子
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="reportPost()">
+                        <i class="bi bi-flag"></i> 举报
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// CSRF token获取函数
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+let replyingToId = null;
+
+function scrollToReplyForm() {
+    document.getElementById('reply-form').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+    document.getElementById('content').focus();
+}
+
+function replyTo(replyId) {
+    replyingToId = replyId;
+    document.getElementById('parent-reply-id').value = replyId;
+    
+    // 滚动到回复表单
+    scrollToReplyForm();
+    
+    // 添加提示信息
+    const existingAlert = document.querySelector('.alert-info');
+    if (existingAlert) {
+        existingAlert.remove();
+    }
+    
+    const alertHtml = `
+        <div class="alert alert-info d-flex justify-content-between align-items-center" id="reply-alert">
+            <span><i class="bi bi-info-circle"></i> 正在回复评论</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cancelReply()">取消回复</button>
+        </div>
+    `;
+    
+    document.getElementById('reply-form-element').insertAdjacentHTML('afterbegin', alertHtml);
+}
+
+function cancelReply() {
+    replyingToId = null;
+    document.getElementById('parent-reply-id').value = '';
+    const alert = document.getElementById('reply-alert');
+    if (alert) {
+        alert.remove();
+    }
+}
+
+function deleteReply(replyId) {
+    if (confirm('确定要删除这条回复吗？')) {
+        fetch(`/myapp/reply/${replyId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || '删除失败');
+            }
+        });
+    }
+}
+
+function toggleEssence(postId) {
+    fetch(`/myapp/post/${postId}/essence/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || '操作失败');
+        }
+    });
+}
+
+function toggleTop(postId) {
+    fetch(`/myapp/post/${postId}/top/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || '操作失败');
+        }
+    });
+}
+
+function sharePost() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ post.title }}',
+            text: '{{ post.content|truncatewords:20|striptags }}',
+            url: window.location.href,
+        });
+    } else {
+        // 复制链接到剪贴板
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('链接已复制到剪贴板');
+        });
+    }
+}
+
+function reportPost() {
+    alert('举报功能将在后续版本中实现');
+}
+</script>
+{% endblock %}

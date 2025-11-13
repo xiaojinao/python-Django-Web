@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}首页 - 我的 Django 网站{% endblock %}
+
+{% block content %}
+<!-- 英雄区域 -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="display-4 fw-bold mb-4">欢迎来到我的 Django 网站!</h1>
+                    <p class="lead mb-4">这是一个使用 Django 框架构建的现代化网站示例，支持多主题切换功能，为您提供个性化的视觉体验。</p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a class="btn btn-primary btn-lg" href="{% url 'theme_list' %}" role="button">
+                            <i class="bi bi-palette"></i> 探索主题
+                        </a>
+                        <a class="btn btn-outline-primary btn-lg" href="#" role="button">
+                            <i class="bi bi-info-circle"></i> 了解更多
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-illustration">
+                    <div class="theme-preview-large">
+                        <div class="preview-header"></div>
+                        <div class="preview-body">
+                            <div class="preview-sidebar"></div>
+                            <div class="preview-content">
+                                <div class="preview-card"></div>
+                                <div class="preview-card"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 功能特性 -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="fw-bold mb-3">功能特性</h2>
+                <p class="lead text-secondary">探索我们提供的强大功能和灵活选项</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="bi bi-palette2"></i>
+                    </div>
+                    <h3 class="feature-title">多主题支持</h3>
+                    <p class="feature-text">支持多种主题切换，包括浅色、暗色、蓝色和绿色主题，提供不同的视觉体验，满足不同场景需求。</p>
+                    <a href="{% url 'theme_list' %}" class="btn btn-outline-primary mt-3">查看主题</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="bi bi-lightning"></i>
+                    </div>
+                    <h3 class="feature-title">动态CSS变量</h3>
+                    <p class="feature-text">使用CSS变量实现主题切换，确保所有组件都能适应不同的主题风格，提供一致的用户体验。</p>
+                    <a href="#" class="btn btn-outline-primary mt-3">了解更多</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="bi bi-phone"></i>
+                    </div>
+                    <h3 class="feature-title">响应式设计</h3>
+                    <p class="feature-text">网站采用响应式设计，在不同设备上都能提供良好的用户体验，无论是桌面、平板还是手机。</p>
+                    <a href="#" class="btn btn-outline-primary mt-3">查看详情</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 主题预览区 -->
+<section class="theme-showcase py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="fw-bold mb-3">主题展示</h2>
+                <p class="lead text-secondary">选择您喜欢的主题，立即体验不同的视觉风格</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="theme-showcase-card" data-theme="light">
+                    <div class="theme-preview-small">
+                        <div class="preview-header"></div>
+                        <div class="preview-body">
+                            <div class="preview-sidebar"></div>
+                            <div class="preview-content">
+                                <div class="preview-card"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-info">
+                        <h5>浅色主题</h5>
+                        <p>清新明亮的默认主题</p>
+                        <button class="btn btn-sm btn-outline-primary apply-theme-btn" data-theme="light">应用主题</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="theme-showcase-card" data-theme="dark">
+                    <div class="theme-preview-small">
+                        <div class="preview-header"></div>
+                        <div class="preview-body">
+                            <div class="preview-sidebar"></div>
+                            <div class="preview-content">
+                                <div class="preview-card"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-info">
+                        <h5>暗色主题</h5>
+                        <p>护眼的深色主题</p>
+                        <button class="btn btn-sm btn-outline-primary apply-theme-btn" data-theme="dark">应用主题</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="theme-showcase-card" data-theme="blue">
+                    <div class="theme-preview-small">
+                        <div class="preview-header"></div>
+                        <div class="preview-body">
+                            <div class="preview-sidebar"></div>
+                            <div class="preview-content">
+                                <div class="preview-card"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-info">
+                        <h5>蓝色主题</h5>
+                        <p>专业稳重的蓝色风格</p>
+                        <button class="btn btn-sm btn-outline-primary apply-theme-btn" data-theme="blue">应用主题</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="theme-showcase-card" data-theme="green">
+                    <div class="theme-preview-small">
+                        <div class="preview-header"></div>
+                        <div class="preview-body">
+                            <div class="preview-sidebar"></div>
+                            <div class="preview-content">
+                                <div class="preview-card"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-info">
+                        <h5>绿色主题</h5>
+                        <p>自然舒适的绿色风格</p>
+                        <button class="btn btn-sm btn-outline-primary apply-theme-btn" data-theme="green">应用主题</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 当前主题信息 -->
+<section class="current-theme-section py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="current-theme-card">
+                    <div class="card-header">
+                        <h3 class="mb-0">当前主题信息</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="current-theme-info">
+                                    <h5>当前激活主题</h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="current-theme-preview me-3"></div>
+                                        <div>
+                                            <h4 class="mb-1">{{ active_theme.name|default:"默认浅色主题" }}</h4>
+                                            <p class="text-secondary mb-0">这是一个美观实用的主题，提供良好的视觉体验</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="quick-theme-switch">
+                                    <h5>快速切换</h5>
+                                    <p class="text-secondary mb-3">点击下方按钮快速切换主题</p>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm theme-quick-btn" data-theme="light">浅色</button>
+                                        <button class="btn btn-sm theme-quick-btn" data-theme="dark">暗色</button>
+                                        <button class="btn btn-sm theme-quick-btn" data-theme="blue">蓝色</button>
+                                        <button class="btn btn-sm theme-quick-btn" data-theme="green">绿色</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 为快速切换按钮添加事件监听
+    const themeSwitchBtns = document.querySelectorAll('.theme-quick-btn');
+    themeSwitchBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const theme = this.getAttribute('data-theme');
+            if (window.themeManager) {
+                window.themeManager.switchTheme(theme);
+                // 更新按钮状态
+                themeSwitchBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
+    
+    // 为应用主题按钮添加事件监听
+    const applyThemeBtns = document.querySelectorAll('.apply-theme-btn');
+    applyThemeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const theme = this.getAttribute('data-theme');
+            if (window.themeManager) {
+                window.themeManager.switchTheme(theme);
+                // 滚动到当前主题信息区域
+                document.querySelector('.current-theme-section').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            }
+        });
+    });
+    
+    // 初始化当前主题按钮状态
+    const currentTheme = document.body.getAttribute('data-theme') || 'light';
+    themeSwitchBtns.forEach(btn => {
+        if (btn.getAttribute('data-theme') === currentTheme) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // 确保主题管理器已初始化
+    if (window.themeManager) {
+        // 手动触发一次主题应用，确保页面加载时主题正确
+        window.themeManager.applyTheme(currentTheme);
+    } else {
+        // 如果主题管理器尚未初始化，等待它初始化
+        setTimeout(() => {
+            if (window.themeManager) {
+                window.themeManager.applyTheme(currentTheme);
+            }
+        }, 100);
+    }
+});
+</script>
+{% endblock %}

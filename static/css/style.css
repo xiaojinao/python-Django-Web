@@ -1,0 +1,17 @@
+/* 自定义样式 */
+.jumbotron {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+}
+
+.card {
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+footer {
+    margin-top: 50px;
+}

@@ -1,0 +1,521 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }}的个人资料 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'forum_index' %}">论坛首页</a></li>
+                <li class="breadcrumb-item active">{{ profile_user.username }}的个人资料</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-4">
+        <!-- 用户基本信息 -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px; font-size: 2.5rem;">
+                    {{ profile_user.username|slice:":2"|upper }}
+                </div>
+                <h4 class="mb-1">{{ profile_user.username }}</h4>
+                {% if profile_user.is_staff %}
+                <span class="badge bg-primary mb-3">管理员</span>
+                {% endif %}
+                
+                {% with profile=profile_user.userprofile %}
+                <p class="text-muted">{{ profile.bio|default:"这个人很懒，什么都没有留下。" }}</p>
+                
+                {% if profile.location %}
+                <p class="text-muted small mb-2">
+                    <i class="bi bi-geo-alt"></i> {{ profile.location }}
+                </p>
+                {% endif %}
+                
+                {% if profile.website %}
+                <p class="mb-3">
+                    <a href="{{ profile.website }}" target="_blank" class="text-decoration-none">
+                        <i class="bi bi-link-45deg"></i> 个人网站
+                    </a>
+                </p>
+                {% endif %}
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="h5 mb-0 text-primary">{{ profile.post_count|default:0 }}</div>
+                        <small class="text-muted">发帖</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h5 mb-0 text-info">{{ profile.reply_count|default:0 }}</div>
+                        <small class="text-muted">回复</small>
+                    </div>
+                </div>
+                {% endwith %}
+            </div>
+        </div>
+        
+        <!-- 用户状态 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">用户状态</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center small">
+                    <div class="col-6">
+                        <div class="text-success">{{ profile_user.is_active|yesno:"在线,离线" }}</div>
+                        <small class="text-muted">状态</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-warning">{{ profile_user.last_login|date:"m-d H:i"|default:"从未" }}</div>
+                        <small class="text-muted">最后登录</small>
+                    </div>
+                </div>
+                <hr class="my-2">
+                <div class="small text-muted text-center">
+                    加入时间：{{ profile_user.date_joined|date:"Y-m-d" }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 相关操作 -->
+        {% if user.is_authenticated and user != profile_user %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">相关操作</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="sendMessage()">
+                        <i class="bi bi-envelope"></i> 发送消息
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="followUser()">
+                        <i class="bi bi-person-plus"></i> 关注用户
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="reportUser()">
+                        <i class="bi bi-flag"></i> 举报用户
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- 编辑资料 -->
+        {% if user.is_authenticated and user == profile_user %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">个人设置</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'user_profile_edit' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil"></i> 编辑资料
+                    </a>
+                    <a href="{% url 'user_profile_settings' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-gear"></i> 账户设置
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-12 col-lg-8">
+        <!-- 标签页导航 -->
+        <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab">
+                    <i class="bi bi-file-text"></i> 发表的话题 ({{ user_posts.paginator.count|default:0 }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="replies-tab" data-bs-toggle="tab" data-bs-target="#replies" type="button" role="tab">
+                    <i class="bi bi-chat"></i> 我的回复 ({{ user_replies.paginator.count|default:0 }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="favorites-tab" data-bs-toggle="tab" data-bs-target="#favorites" type="button" role="tab">
+                    <i class="bi bi-star"></i> 收藏的帖子 ({{ favorite_posts.paginator.count|default:0 }})
+                </button>
+            </li>
+            {% if user.is_authenticated and user == profile_user %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button" role="tab">
+                    <i class="bi bi-bell"></i> 通知
+                    {% if unread_notifications_count > 0 %}
+                    <span class="badge bg-danger ms-1">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            {% endif %}
+        </ul>
+        
+        <!-- 标签页内容 -->
+        <div class="tab-content" id="profileTabsContent">
+            <!-- 发表的话题 -->
+            <div class="tab-pane fade show active" id="posts" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-body p-0">
+                        {% if user_posts %}
+                        <div class="list-group list-group-flush">
+                            {% for post in user_posts %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="{% url 'post_detail' post.id %}" class="text-decoration-none">
+                                                {{ post.title }}
+                                            </a>
+                                            {% if post.is_top %}
+                                            <span class="badge bg-primary ms-2">置顶</span>
+                                            {% endif %}
+                                            {% if post.is_essence %}
+                                            <span class="badge bg-warning ms-1">精华</span>
+                                            {% endif %}
+                                        </h6>
+                                        <p class="text-muted small mb-1">{{ post.content|truncatewords:20|striptags }}</p>
+                                        <div class="d-flex align-items-center text-muted small">
+                                            <span class="me-3">
+                                                <a href="{% url 'forum_detail' post.forum.id %}" class="text-decoration-none">
+                                                    {{ post.forum.name }}
+                                                </a>
+                                            </span>
+                                            <span class="me-3">
+                                                <i class="bi bi-eye"></i> {{ post.view_count }}
+                                            </span>
+                                            <span class="me-3">
+                                                <i class="bi bi-chat"></i> {{ post.reply_count }}
+                                            </span>
+                                            <span>
+                                                {{ post.created_at|date:"Y-m-d H:i" }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {% if user.is_authenticated and user == profile_user %}
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'post_edit' post.id %}" class="btn btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- 分页 -->
+                        {% if user_posts.paginator.num_pages > 1 %}
+                        <div class="card-footer">
+                            <nav aria-label="用户帖子分页">
+                                <ul class="pagination pagination-sm mb-0 justify-content-center">
+                                    {% if user_posts.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page_posts=1">首页</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page_posts={{ user_posts.previous_page_number }}">上一页</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item active">
+                                        <span class="page-link">
+                                            {{ user_posts.number }} / {{ user_posts.paginator.num_pages }}
+                                        </span>
+                                    </li>
+                                    
+                                    {% if user_posts.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page_posts={{ user_posts.next_page_number }}">下一页</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page_posts={{ user_posts.paginator.num_pages }}">末页</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-2">
+                                <i class="bi bi-file-text" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                            <p class="text-muted">还没有发表过话题</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 我的回复 -->
+            <div class="tab-pane fade" id="replies" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-body p-0">
+                        {% if user_replies %}
+                        <div class="list-group list-group-flush">
+                            {% for reply in user_replies %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center text-muted small mb-1">
+                                            <span class="me-3">
+                                                <i class="bi bi-chat"></i> 回复了
+                                                <a href="{% url 'post_detail' reply.post.id %}" class="text-decoration-none">
+                                                    {{ reply.post.title }}
+                                                </a>
+                                            </span>
+                                            <span>
+                                                {{ reply.created_at|date:"Y-m-d H:i" }}
+                                            </span>
+                                        </div>
+                                        <div class="reply-content">
+                                            {{ reply.content|truncatewords:30|linebreaks }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- 分页 -->
+                        {% if user_replies.paginator.num_pages > 1 %}
+                        <div class="card-footer">
+                            <nav aria-label="用户回复分页">
+                                <ul class="pagination pagination-sm mb-0 justify-content-center">
+                                    {% if user_replies.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page_replies=1">首页</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page_replies={{ user_replies.previous_page_number }}">上一页</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item active">
+                                        <span class="page-link">
+                                            {{ user_replies.number }} / {{ user_replies.paginator.num_pages }}
+                                        </span>
+                                    </li>
+                                    
+                                    {% if user_replies.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page_replies={{ user_replies.next_page_number }}">下一页</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page_replies={{ user_replies.paginator.num_pages }}">末页</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-2">
+                                <i class="bi bi-chat" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                            <p class="text-muted">还没有回复过话题</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 收藏的帖子 -->
+            <div class="tab-pane fade" id="favorites" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-body p-0">
+                        {% if favorite_posts %}
+                        <div class="list-group list-group-flush">
+                            {% for favorite in favorite_posts %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="{% url 'post_detail' favorite.post.id %}" class="text-decoration-none">
+                                                {{ favorite.post.title }}
+                                            </a>
+                                            {% if favorite.post.is_top %}
+                                            <span class="badge bg-primary ms-2">置顶</span>
+                                            {% endif %}
+                                            {% if favorite.post.is_essence %}
+                                            <span class="badge bg-warning ms-1">精华</span>
+                                            {% endif %}
+                                        </h6>
+                                        <p class="text-muted small mb-1">{{ favorite.post.content|truncatewords:20|striptags }}</p>
+                                        <div class="d-flex align-items-center text-muted small">
+                                            <span class="me-3">
+                                                作者：
+                                                <a href="{% url 'user_profile_detail' favorite.post.author.username %}" class="text-decoration-none">
+                                                    {{ favorite.post.author.username }}
+                                                </a>
+                                            </span>
+                                            <span class="me-3">
+                                                <a href="{% url 'forum_detail' favorite.post.forum.id %}" class="text-decoration-none">
+                                                    {{ favorite.post.forum.name }}
+                                                </a>
+                                            </span>
+                                            <span class="me-3">
+                                                <i class="bi bi-eye"></i> {{ favorite.post.view_count }}
+                                            </span>
+                                            <span>
+                                                {{ favorite.created_at|date:"Y-m-d H:i" }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {% if user.is_authenticated and user == profile_user %}
+                                    <button class="btn btn-outline-danger btn-sm" onclick="removeFavorite({{ favorite.id }})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-2">
+                                <i class="bi bi-star" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                            <p class="text-muted">还没有收藏任何帖子</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 通知 -->
+            {% if user.is_authenticated and user == profile_user %}
+            <div class="tab-pane fade" id="notifications" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">通知消息</h6>
+                            {% if unread_notifications_count > 0 %}
+                            <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
+                                全部标记为已读
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if notifications %}
+                        <div class="list-group list-group-flush">
+                            {% for notification in notifications %}
+                            <div class="list-group-item {% if not notification.is_read %}bg-light{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-1">{{ notification.message|linebreaks }}</p>
+                                        <small class="text-muted">{{ notification.created_at|date:"Y-m-d H:i" }}</small>
+                                    </div>
+                                    <div>
+                                        {% if not notification.is_read %}
+                                        <span class="badge bg-primary">新</span>
+                                        {% endif %}
+                                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteNotification({{ notification.id }})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <div class="mb-2">
+                                <i class="bi bi-bell" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                            <p class="text-muted">暂无通知消息</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 关注用户
+function followUser() {
+    alert('关注功能将在后续版本中实现');
+}
+
+// 发送消息
+function sendMessage() {
+    alert('私信功能将在后续版本中实现');
+}
+
+// 举报用户
+function reportUser() {
+    alert('举报功能将在后续版本中实现');
+}
+
+// 取消收藏
+function removeFavorite(favoriteId) {
+    if (confirm('确定要取消收藏吗？')) {
+        fetch(`/myapp/favorite/${favoriteId}/remove/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || '取消收藏失败');
+            }
+        });
+    }
+}
+
+// 标记所有通知为已读
+function markAllAsRead() {
+    fetch('/myapp/notifications/mark-all-read/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || '操作失败');
+        }
+    });
+}
+
+// 删除通知
+function deleteNotification(notificationId) {
+    if (confirm('确定要删除这条通知吗？')) {
+        fetch(`/myapp/notifications/${notificationId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || '删除失败');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

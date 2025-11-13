@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}通知中心 - {{ block.super }}{% endblock %}
+
+{% block extra_js %}
+<script>
+function markAllAsRead() {
+    if (confirm('确定要标记所有通知为已读吗？')) {
+        fetch('{% url "notifications" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({ 'mark_all_read': 'true' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('操作失败，请重试');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作失败，请重试');
+        });
+    }
+}
+
+function markAsRead(notificationId) {
+    fetch(`{% url 'mark_notification_read' 0 %}`.replace('/0/', '/' + notificationId + '/'), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="row">
+    <div class="col-12">
+        <!-- 页面标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">
+                <i class="bi bi-bell-fill me-2"></i>通知中心
+                {% if notifications|length > 0 %}
+                <small class="text-muted">({{ notifications|length }})</small>
+                {% endif %}
+            </h2>
+            {% if notifications.exists %}
+            <a href="#" class="btn btn-outline-primary btn-sm" onclick="markAllAsRead()">
+                <i class="bi bi-check-all"></i> 全部标为已读
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- 通知列表 -->
+        {% if notifications %}
+        <div class="list-group">
+            {% for notification in notifications %}
+            <div class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-primary{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-2">
+                            {% if not notification.is_read %}
+                            <span class="badge bg-primary me-2">新</span>
+                            {% endif %}
+                            <span class="text-muted small">{{ notification.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        
+                        <h6 class="mb-1">{{ notification.title }}</h6>
+                        <p class="mb-1 text-muted">{{ notification.content }}</p>
+                        
+                        {% if notification.url %}
+                        <div class="mt-2">
+                            <a href="{{ notification.url }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-arrow-right"></i> 查看详情
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not notification.is_read %}
+                    <div class="ms-3">
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="markAsRead({{ notification.id }})" title="标为已读">
+                            <i class="bi bi-check"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- 空状态 -->
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="bi bi-bell-slash" style="font-size: 4rem; color: #6c757d;"></i>
+            </div>
+            <h5 class="text-muted">暂无通知</h5>
+            <p class="text-muted">当有新的互动消息时，这里会显示通知</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

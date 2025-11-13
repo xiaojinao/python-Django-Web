@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}主题管理 - 我的 Django 网站{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">主题管理</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createThemeModal">
+                <i class="bi bi-plus-circle"></i> 创建主题
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>可用主题</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for theme in themes %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card theme-card {% if theme.is_active %}active{% endif %}" data-theme-id="{{ theme.id }}">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">{{ theme.name }}</h5>
+                                {% if theme.is_active %}
+                                <span class="badge bg-success">当前激活</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">{{ theme.description }}</p>
+                                <div class="theme-preview mb-3">
+                                    <div class="preview-colors d-flex gap-2">
+                                        <div class="preview-color" style="background-color: var(--{{ theme.code }}-primary); width: 30px; height: 30px; border-radius: 4px;" title="主色调"></div>
+                                        <div class="preview-color" style="background-color: var(--{{ theme.code }}-secondary); width: 30px; height: 30px; border-radius: 4px;" title="次要色调"></div>
+                                        <div class="preview-color" style="background-color: var(--{{ theme.code }}-background); width: 30px; height: 30px; border-radius: 4px;" title="背景色"></div>
+                                        <div class="preview-color" style="background-color: var(--{{ theme.code }}-text); width: 30px; height: 30px; border-radius: 4px;" title="文本色"></div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'switch_theme' theme.id %}" class="btn btn-primary btn-sm">应用主题</a>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#editThemeModal" data-theme-id="{{ theme.id }}">
+                                            <i class="bi bi-pencil"></i> 编辑
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteThemeModal" data-theme-id="{{ theme.id }}">
+                                            <i class="bi bi-trash"></i> 删除
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            暂无主题，<button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#createThemeModal">点击创建</button>您的第一个主题。
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 创建主题模态框 -->
+<div class="modal fade" id="createThemeModal" tabindex="-1" aria-labelledby="createThemeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createThemeModalLabel">创建新主题</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'create_theme' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="themeName" class="form-label">主题名称</label>
+                        <input type="text" class="form-control" id="themeName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="themeCode" class="form-label">主题代码</label>
+                        <input type="text" class="form-control" id="themeCode" name="code" required>
+                        <div class="form-text">用于CSS变量前缀，例如: light, dark, blue</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="themeDescription" class="form-label">主题描述</label>
+                        <textarea class="form-control" id="themeDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="themeIsActive" class="form-check-label">设为激活主题</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="themeIsActive" name="is_active">
+                            <label class="form-check-label" for="themeIsActive">
+                                立即激活此主题
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">创建主题</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑主题模态框 -->
+<div class="modal fade" id="editThemeModal" tabindex="-1" aria-labelledby="editThemeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editThemeModalLabel">编辑主题</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="editThemeForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" id="editThemeId" name="id">
+                    <div class="mb-3">
+                        <label for="editThemeName" class="form-label">主题名称</label>
+                        <input type="text" class="form-control" id="editThemeName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editThemeCode" class="form-label">主题代码</label>
+                        <input type="text" class="form-control" id="editThemeCode" name="code" required>
+                        <div class="form-text">用于CSS变量前缀，例如: light, dark, blue</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editThemeDescription" class="form-label">主题描述</label>
+                        <textarea class="form-control" id="editThemeDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editThemeIsActive" class="form-check-label">激活状态</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editThemeIsActive" name="is_active">
+                            <label class="form-check-label" for="editThemeIsActive">
+                                设为激活主题
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存更改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除主题模态框 -->
+<div class="modal fade" id="deleteThemeModal" tabindex="-1" aria-labelledby="deleteThemeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteThemeModalLabel">删除主题</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>您确定要删除这个主题吗？此操作无法撤销。</p>
+                <input type="hidden" id="deleteThemeId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteTheme">确认删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 编辑主题模态框事件处理
+    const editThemeModal = document.getElementById('editThemeModal');
+    editThemeModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const themeId = button.getAttribute('data-theme-id');
+        
+        // 这里应该从服务器获取主题数据，简化起见使用模拟数据
+        document.getElementById('editThemeId').value = themeId;
+        document.getElementById('editThemeName').value = '主题名称 ' + themeId;
+        document.getElementById('editThemeCode').value = 'theme_code_' + themeId;
+        document.getElementById('editThemeDescription').value = '这是主题 ' + themeId + ' 的描述';
+        
+        // 设置表单action
+        document.getElementById('editThemeForm').action = '/themes/edit/' + themeId + '/';
+    });
+    
+    // 删除主题模态框事件处理
+    const deleteThemeModal = document.getElementById('deleteThemeModal');
+    deleteThemeModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const themeId = button.getAttribute('data-theme-id');
+        document.getElementById('deleteThemeId').value = themeId;
+    });
+    
+    // 确认删除主题
+    document.getElementById('confirmDeleteTheme').addEventListener('click', function() {
+        const themeId = document.getElementById('deleteThemeId').value;
+        window.location.href = '/themes/delete/' + themeId + '/';
+    });
+});
+</script>
+{% endblock %}

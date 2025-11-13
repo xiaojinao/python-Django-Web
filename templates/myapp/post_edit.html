@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ form.instance.title|default:"编辑帖子" }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'forum_index' %}">论坛首页</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'forum_detail' form.instance.forum.id %}">{{ form.instance.forum.name }}</a></li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'post_detail' form.instance.id %}">{{ form.instance.title }}</a>
+                </li>
+                <li class="breadcrumb-item active">编辑帖子</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-9">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil"></i> 编辑帖子
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="post-form">
+                    {% csrf_token %}
+                    
+                    <!-- 标题 -->
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            帖子标题 <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title|add_class:"form-control"|attr:"placeholder:请输入帖子标题" }}
+                        {% if form.title.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.title.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 选择板块 -->
+                    <div class="mb-3">
+                        <label for="{{ form.forum.id_for_label }}" class="form-label">
+                            所属板块 <span class="text-danger">*</span>
+                        </label>
+                        {{ form.forum|add_class:"form-select" }}
+                        {% if form.forum.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.forum.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 内容 -->
+                    <div class="mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">
+                            帖子内容 <span class="text-danger">*</span>
+                        </label>
+                        {{ form.content|add_class:"form-control"|attr:"rows:12"|attr:"placeholder:请输入帖子内容，支持Markdown格式" }}
+                        {% if form.content.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.content.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 富文本编辑器提示 -->
+                        <div class="form-text">
+                            支持 <strong>Markdown</strong> 格式：
+                            <code># 标题</code>、
+                            <code>**粗体**</code>、
+                            <code>*斜体*</code>、
+                            <code>[链接](URL)</code> 等
+                        </div>
+                    </div>
+                    
+                    <!-- 标签 -->
+                    <div class="mb-3">
+                        <label for="tags" class="form-label">标签</label>
+                        <input type="text" class="form-control" name="tags" id="tags" 
+                               value="{% for tag in form.instance.tags.all %}{{ tag.name }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                               placeholder="多个标签用逗号分隔，如：Python,Django,教程">
+                        <div class="form-text">输入相关的标签有助于其他人找到您的帖子</div>
+                    </div>
+                    
+                    <!-- 状态选择 -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_close|add_class:"form-check-input" }}
+                            <label class="form-check-label" for="{{ form.is_close.id_for_label }}">
+                                关闭帖子（禁止新的回复）
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 提交按钮 -->
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
+                                <i class="bi bi-check-lg"></i> 保存修改
+                            </button>
+                            <a href="{% url 'post_detail' form.instance.id %}" class="btn btn-secondary ms-2">
+                                <i class="bi bi-x-lg"></i> 取消
+                            </a>
+                        </div>
+                        
+                        <!-- 删除帖子按钮 -->
+                        <div>
+                            <button type="button" class="btn btn-outline-danger" onclick="deletePost()">
+                                <i class="bi bi-trash"></i> 删除帖子
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 侧边栏 -->
+    <div class="col-12 col-lg-3">
+        <!-- 编辑提示 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> 编辑提示
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0 small">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        标题应简洁明了地描述帖子主题
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        选择合适的板块有助于更多人看到
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        内容支持 Markdown 格式排版
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success"></i>
+                        添加相关标签便于搜索
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 帖子统计 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">帖子统计</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center small">
+                    <div class="col-6">
+                        <div class="text-primary">{{ form.instance.view_count|default:0 }}</div>
+                        <small class="text-muted">浏览</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-info">{{ form.instance.reply_count|default:0 }}</div>
+                        <small class="text-muted">回复</small>
+                    </div>
+                </div>
+                <hr class="my-2">
+                <div class="small text-muted">
+                    <div>创建于 {{ form.instance.created_at|date:"Y-m-d H:i" }}</div>
+                    {% if form.instance.updated_at != form.instance.created_at %}
+                    <div>修改于 {{ form.instance.updated_at|date:"Y-m-d H:i" }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- 相关功能 -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">相关功能</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'post_detail' form.instance.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye"></i> 预览帖子
+                    </a>
+                    <a href="{% url 'forum_detail' form.instance.forum.id %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> 返回板块
+                    </a>
+                    <a href="{% url 'forum_index' %}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-house"></i> 论坛首页
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('post-form').addEventListener('submit', function() {
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
+});
+
+function deletePost() {
+    if (confirm('确定要删除这个帖子吗？此操作不可恢复！\n\n该帖子目前有 {{ form.instance.reply_count|default:0 }} 个回复，所有回复也会被一并删除。')) {
+        if (confirm('请再次确认：删除后无法恢复！')) {
+            // 创建删除表单并提交
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "post_delete" form.instance.id %}';
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = getCookie('csrftoken');
+            
+            form.appendChild(csrfToken);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+
+// 自动保存功能（可选）
+let autoSaveTimeout;
+const titleInput = document.getElementById('{{ form.title.id_for_label }}');
+const contentInput = document.getElementById('{{ form.content.id_for_label }}');
+
+function autoSave() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        const title = titleInput.value;
+        const content = contentInput.value;
+        
+        if (title.trim() || content.trim()) {
+            // 可以在这里实现自动保存到本地存储
+            localStorage.setItem('post_draft', JSON.stringify({
+                title: title,
+                content: content,
+                timestamp: new Date().toISOString()
+            }));
+        }
+    }, 1000);
+}
+
+if (titleInput && contentInput) {
+    titleInput.addEventListener('input', autoSave);
+    contentInput.addEventListener('input', autoSave);
+    
+    // 页面加载时检查是否有草稿
+    const draft = localStorage.getItem('post_draft');
+    if (draft && confirm('检测到之前保存的草稿，是否恢复？')) {
+        try {
+            const draftData = JSON.parse(draft);
+            if (!titleInput.value && draftData.title) {
+                titleInput.value = draftData.title;
+            }
+            if (!contentInput.value && draftData.content) {
+                contentInput.value = draftData.content;
+            }
+        } catch (e) {
+            console.error('草稿数据解析失败:', e);
+        }
+    }
+}
+</script>
+{% endblock %}

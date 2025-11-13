@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}发布新帖 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'forum_index' %}">论坛首页</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'forum_detail' forum.id %}">{{ forum.name }}</a></li>
+                <li class="breadcrumb-item active">发布新帖</li>
+            </ol>
+        </nav>
+        
+        <h1 class="h3 mb-4">
+            <i class="bi bi-plus-circle"></i> 在 "{{ forum.name }}" 中发布新帖
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">帖子内容</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">
+                            <strong>帖子标题 <span class="text-danger">*</span></strong>
+                        </label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               maxlength="200" required 
+                               placeholder="请输入帖子标题（最多200个字符）">
+                        <div class="form-text">请用简洁明了的标题描述帖子内容</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">
+                            <strong>帖子内容 <span class="text-danger">*</span></strong>
+                        </label>
+                        <textarea class="form-control" id="content" name="content" rows="12" 
+                                  required placeholder="请输入帖子内容..."></textarea>
+                        <div class="form-text">
+                            支持 Markdown 语法
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> 发布帖子
+                            </button>
+                            <a href="{% url 'forum_detail' forum.id %}" class="btn btn-secondary ms-2">
+                                <i class="bi bi-x-circle"></i> 取消
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">发帖提示</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        选择合适的标题，帮助其他用户快速理解
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        发布前请仔细检查内容和排版
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        尊重他人，避免发布不当内容
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-info-circle text-info me-2"></i>
+                        帖子发布后可以随时编辑
+                    </li>
+                    <li>
+                        <i class="bi bi-shield-check text-primary me-2"></i>
+                        管理员可以设置精华或置顶优质帖子
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if user.is_staff %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">管理员功能</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    作为管理员，您的帖子将自动获得特殊标识
+                </p>
+                <ul class="list-unstyled small mb-0">
+                    <li><i class="bi bi-star-fill text-warning me-2"></i>管理员标识</li>
+                    <li><i class="bi bi-eye text-info me-2"></i>更高的浏览量</li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

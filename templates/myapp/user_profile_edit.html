@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}编辑个人资料 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'forum_index' %}">论坛首页</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'user_profile_detail' user.username %}">{{ user.username }}</a></li>
+                <li class="breadcrumb-item active">编辑资料</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil"></i> 编辑个人资料
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="profile-form">
+                    {% csrf_token %}
+                    
+                    <!-- 基本信息 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">基本信息</h5>
+                        </div>
+                        
+                        <!-- 用户名 -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">用户名</label>
+                            {{ form.username|add_class:"form-control"|attr:"readonly" }}
+                            <div class="form-text text-muted">用户名不可修改</div>
+                        </div>
+                        
+                        <!-- 邮箱 -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">邮箱</label>
+                            {{ form.email|add_class:"form-control" }}
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- 个人简介 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">个人简介</h5>
+                        </div>
+                        
+                        <!-- 头像 -->
+                        <div class="col-md-6 mb-3">
+                            <label for="avatar" class="form-label">头像</label>
+                            <div class="mb-2">
+                                <img src="{{ user.profile.avatar.url|default:'/static/default-avatar.png' }}" 
+                                     alt="当前头像" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                            </div>
+                            <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
+                            <div class="form-text">支持 JPG、PNG 格式，文件大小不超过 2MB</div>
+                        </div>
+                        
+                        <!-- 个人简介 -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ profile_form.bio.id_for_label }}" class="form-label">个人简介</label>
+                            {{ profile_form.bio|add_class:"form-control"|attr:"rows:4"|attr:"placeholder:简单介绍一下自己..." }}
+                            {% if profile_form.bio.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ profile_form.bio.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- 联系信息 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">联系信息</h5>
+                        </div>
+                        
+                        <!-- 所在地区 -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ profile_form.location.id_for_label }}" class="form-label">所在地区</label>
+                            {{ profile_form.location|add_class:"form-control"|attr:"placeholder:如：北京, 上海" }}
+                            {% if profile_form.location.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ profile_form.location.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 个人网站 -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ profile_form.website.id_for_label }}" class="form-label">个人网站</label>
+                            {{ profile_form.website|add_class:"form-control"|attr:"placeholder:https://www.example.com" }}
+                            {% if profile_form.website.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ profile_form.website.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- 兴趣爱好 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3">兴趣爱好</h5>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="{{ profile_form.interests.id_for_label }}" class="form-label">兴趣标签</label>
+                            {{ profile_form.interests|add_class:"form-control"|attr:"placeholder:用逗号分隔，如：编程,阅读,旅行,摄影" }}
+                            {% if profile_form.interests.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ profile_form.interests.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">可以输入多个兴趣，用逗号分隔</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 提交按钮 -->
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
+                                <i class="bi bi-check-lg"></i> 保存修改
+                            </button>
+                            <a href="{% url 'user_profile_detail' user.username %}" class="btn btn-secondary ms-2">
+                                <i class="bi bi-x-lg"></i> 取消
+                            </a>
+                        </div>
+                        
+                        <div>
+                            <button type="button" class="btn btn-outline-info" onclick="previewProfile()">
+                                <i class="bi bi-eye"></i> 预览资料
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 预览模态框 -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">资料预览</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px; font-size: 2.5rem;" id="preview-avatar">
+                        {{ user.username|slice:":2"|upper }}
+                    </div>
+                    <h4>{{ form.username.value }}</h4>
+                    <p class="text-muted" id="preview-bio">这个人很懒，什么都没有留下。</p>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="h5 mb-0 text-primary">{{ user.profile.post_count|default:0 }}</div>
+                        <small class="text-muted">发帖</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h5 mb-0 text-info">{{ user.profile.reply_count|default:0 }}</div>
+                        <small class="text-muted">回复</small>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>所在地区：</strong><span id="preview-location">未填写</span></p>
+                        <p class="mb-0"><strong>个人网站：</strong><span id="preview-website">未填写</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-0"><strong>兴趣标签：</strong><span id="preview-interests">未填写</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭预览</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('profile-form').addEventListener('submit', function() {
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
+});
+
+// 头像预览
+document.getElementById('avatar').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+            alert('文件大小不能超过 2MB');
+            e.target.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.querySelector('.img-thumbnail').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// 预览资料
+function previewProfile() {
+    const bio = document.getElementById('{{ profile_form.bio.id_for_label }}').value || '这个人很懒，什么都没有留下。';
+    const location = document.getElementById('{{ profile_form.location.id_for_label }}').value || '未填写';
+    const website = document.getElementById('{{ profile_form.website.id_for_label }}').value || '未填写';
+    const interests = document.getElementById('{{ profile_form.interests.id_for_label }}').value || '未填写';
+    
+    document.getElementById('preview-bio').textContent = bio;
+    document.getElementById('preview-location').textContent = location;
+    document.getElementById('preview-website').textContent = website;
+    document.getElementById('preview-interests').textContent = interests;
+    
+    // 处理网站链接
+    const websiteElement = document.getElementById('preview-website');
+    if (website !== '未填写') {
+        websiteElement.innerHTML = `<a href="${website}" target="_blank">${website}</a>`;
+    }
+    
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
+}
+
+// 自动保存功能
+let autoSaveTimeout;
+const inputs = document.querySelectorAll('#profile-form input, #profile-form textarea');
+
+function autoSave() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        const formData = new FormData(document.getElementById('profile-form'));
+        // 这里可以实现自动保存到本地存储
+        localStorage.setItem('profile_draft', JSON.stringify({
+            bio: formData.get('bio') || '',
+            location: formData.get('location') || '',
+            website: formData.get('website') || '',
+            interests: formData.get('interests') || '',
+            timestamp: new Date().toISOString()
+        }));
+    }, 2000);
+}
+
+inputs.forEach(input => {
+    input.addEventListener('input', autoSave);
+});
+
+// 页面加载时检查草稿
+window.addEventListener('load', function() {
+    const draft = localStorage.getItem('profile_draft');
+    if (draft) {
+        try {
+            const draftData = JSON.parse(draft);
+            if (confirm('检测到之前保存的草稿，是否恢复？')) {
+                if (!document.getElementById('{{ profile_form.bio.id_for_label }}').value) {
+                    document.getElementById('{{ profile_form.bio.id_for_label }}').value = draftData.bio || '';
+                }
+                if (!document.getElementById('{{ profile_form.location.id_for_label }}').value) {
+                    document.getElementById('{{ profile_form.location.id_for_label }}').value = draftData.location || '';
+                }
+                if (!document.getElementById('{{ profile_form.website.id_for_label }}').value) {
+                    document.getElementById('{{ profile_form.website.id_for_label }}').value = draftData.website || '';
+                }
+                if (!document.getElementById('{{ profile_form.interests.id_for_label }}').value) {
+                    document.getElementById('{{ profile_form.interests.id_for_label }}').value = draftData.interests || '';
+                }
+            }
+        } catch (e) {
+            console.error('草稿数据解析失败:', e);
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+
+{% block title %}账户设置 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'forum_index' %}">论坛首页</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'user_profile_detail' user.username %}">{{ user.username }}</a></li>
+                <li class="breadcrumb-item active">账户设置</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-gear"></i> 账户设置
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- 标签页导航 -->
+                <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                            <i class="bi bi-shield-check"></i> 安全设置
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="notification-tab" data-bs-toggle="tab" data-bs-target="#notification" type="button" role="tab">
+                            <i class="bi bi-bell"></i> 通知偏好
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="privacy-tab" data-bs-toggle="tab" data-bs-target="#privacy" type="button" role="tab">
+                            <i class="bi bi-eye-slash"></i> 隐私设置
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account" type="button" role="tab">
+                            <i class="bi bi-person-gear"></i> 账户管理
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- 标签页内容 -->
+                <div class="tab-content" id="settingsTabsContent">
+                    <!-- 安全设置 -->
+                    <div class="tab-pane fade show active" id="security" role="tabpanel">
+                        <h5 class="mb-3">密码修改</h5>
+                        <form method="POST" action="{% url 'change_password' %}" id="password-form">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="old_password" class="form-label">当前密码</label>
+                                <input type="password" class="form-control" id="old_password" name="old_password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_password1" class="form-label">新密码</label>
+                                <input type="password" class="form-control" id="new_password1" name="new_password1" required>
+                                <div class="form-text">密码长度至少8位，包含字母和数字</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new_password2" class="form-label">确认新密码</label>
+                                <input type="password" class="form-control" id="new_password2" name="new_password2" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">修改密码</button>
+                        </form>
+                        
+                        <hr class="my-4">
+                        
+                        <h5 class="mb-3">登录历史</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>IP地址</th>
+                                        <th>浏览器</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2024-01-15 10:30</td>
+                                        <td>192.168.1.100</td>
+                                        <td>Chrome 120.0</td>
+                                        <td><span class="badge bg-success">当前</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-14 15:22</td>
+                                        <td>192.168.1.100</td>
+                                        <td>Chrome 120.0</td>
+                                        <td><span class="badge bg-secondary">正常</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 通知偏好 -->
+                    <div class="tab-pane fade" id="notification" role="tabpanel">
+                        <form method="POST" action="{% url 'update_notification_settings' %}">
+                            {% csrf_token %}
+                            
+                            <h5 class="mb-3">邮件通知</h5>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="email_reply" name="email_reply" checked>
+                                    <label class="form-check-label" for="email_reply">
+                                        有新回复时发送邮件
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="email_mention" name="email_mention" checked>
+                                    <label class="form-check-label" for="email_mention">
+                                        有人@我时发送邮件
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="email_system" name="email_system">
+                                    <label class="form-check-label" for="email_system">
+                                        系统通知邮件
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <h5 class="mb-3 mt-4">站内通知</h5>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="site_reply" name="site_reply" checked>
+                                    <label class="form-check-label" for="site_reply">
+                                        有新回复时站内通知
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="site_mention" name="site_mention" checked>
+                                    <label class="form-check-label" for="site_mention">
+                                        有人@我时站内通知
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">保存设置</button>
+                        </form>
+                    </div>
+                    
+                    <!-- 隐私设置 -->
+                    <div class="tab-pane fade" id="privacy" role="tabpanel">
+                        <form method="POST" action="{% url 'update_privacy_settings' %}">
+                            {% csrf_token %}
+                            
+                            <h5 class="mb-3">个人资料可见性</h5>
+                            <div class="mb-3">
+                                <label class="form-label">谁可以查看我的个人资料</label>
+                                <select class="form-select" name="profile_visibility">
+                                    <option value="everyone">所有人</option>
+                                    <option value="members">仅会员</option>
+                                    <option value="followers">仅关注我的人</option>
+                                    <option value="none">仅自己</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="show_email" name="show_email">
+                                    <label class="form-check-label" for="show_email">
+                                        公开显示邮箱地址
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="show_activity" name="show_activity" checked>
+                                    <label class="form-check-label" for="show_activity">
+                                        公开显示活动状态
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <h5 class="mb-3 mt-4">互动设置</h5>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="allow_friend_request" name="allow_friend_request" checked>
+                                    <label class="form-check-label" for="allow_friend_request">
+                                        允许别人添加我为好友
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="allow_private_message" name="allow_private_message" checked>
+                                    <label class="form-check-label" for="allow_private_message">
+                                        允许接收私信
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">保存设置</button>
+                        </form>
+                    </div>
+                    
+                    <!-- 账户管理 -->
+                    <div class="tab-pane fade" id="account" role="tabpanel">
+                        <h5 class="mb-3">账户状态</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">账户类型</h6>
+                                        <p class="card-text">
+                                            {% if user.is_staff %}
+                                            <span class="badge bg-primary">管理员</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">普通用户</span>
+                                            {% endif %}
+                                        </p>
+                                        <p class="card-text small text-muted">注册时间：{{ user.date_joined|date:"Y-m-d" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">最后登录</h6>
+                                        <p class="card-text">{{ user.last_login|date:"Y-m-d H:i"|default:"从未登录" }}</p>
+                                        <p class="card-text small text-muted">IP：192.168.1.100</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">数据管理</h5>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-info btn-sm" onclick="exportData()">
+                                <i class="bi bi-download"></i> 导出我的数据
+                            </button>
+                            <small class="text-muted d-block">下载您的个人数据和帖子内容</small>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h5 class="mb-3 text-danger">危险操作</h5>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-warning btn-sm" onclick="deactivateAccount()">
+                                <i class="bi bi-pause-circle"></i> 停用账户
+                            </button>
+                            <small class="text-muted d-block">停用后您可以随时重新激活账户</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteAccount()">
+                                <i class="bi bi-trash"></i> 删除账户
+                            </button>
+                            <small class="text-muted d-block text-danger">此操作不可恢复，将永久删除您的所有数据</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 密码强度检查
+document.getElementById('new_password1').addEventListener('input', function() {
+    const password = this.value;
+    const strength = calculatePasswordStrength(password);
+    // 这里可以显示密码强度指示器
+});
+
+function calculatePasswordStrength(password) {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    return strength;
+}
+
+// 表单验证
+document.getElementById('password-form').addEventListener('submit', function(e) {
+    const password1 = document.getElementById('new_password1').value;
+    const password2 = document.getElementById('new_password2').value;
+    
+    if (password1 !== password2) {
+        e.preventDefault();
+        alert('两次输入的密码不一致');
+        return;
+    }
+    
+    if (calculatePasswordStrength(password1) < 3) {
+        e.preventDefault();
+        alert('密码强度不够，请设置更复杂的密码');
+        return;
+    }
+});
+
+// 导出数据
+function exportData() {
+    if (confirm('确认要导出您的个人数据吗？\n这可能需要几分钟时间。')) {
+        alert('数据导出功能将在后续版本中实现');
+    }
+}
+
+// 停用账户
+function deactivateAccount() {
+    if (confirm('确认要停用账户吗？\n\n停用后：\n- 您将无法登录\n- 您的帖子和回复将隐藏\n- 您可以随时重新激活账户')) {
+        if (confirm('请再次确认停用账户')) {
+            alert('账户停用功能将在后续版本中实现');
+        }
+    }
+}
+
+// 删除账户
+function deleteAccount() {
+    if (confirm('危险！确认要删除账户吗？\n\n删除后将发生：\n- 您的账户信息将被永久删除\n- 您发表的所有帖子将被删除\n- 您不能恢复此操作\n\n如果您只是暂时离开，建议使用"停用账户"功能')) {
+        if (prompt('请输入您的用户名以确认删除操作：') === '{{ user.username }}') {
+            if (confirm('这是最后的确认机会，确定要删除账户吗？')) {
+                alert('账户删除功能将在后续版本中实现');
+            }
+        } else {
+            alert('用户名不匹配，删除操作已取消');
+        }
+    }
+}
+
+// 自动保存通知设置
+document.querySelectorAll('#notification input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        setTimeout(() => {
+            // 可以显示保存成功的提示
+        }, 500);
+    });
+});
+</script>
+{% endblock %}
